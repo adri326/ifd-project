@@ -1,4 +1,4 @@
-# IFD Project
+# IFD Project: "The Wor Machine"
 
 This repository contains the necessary bits of code and schematics to reproduce our group's project for the "IFD" (Practical Informatics) class.
 Our group's subject is a counter for the number of people present in a store or place.
@@ -25,8 +25,25 @@ cp esp/src/credentials.cpp.sample esp/src/credentials.cpp
 # You will need to edit esp/src/credentials.cpp with the correct settings
 ```
 
-You will then either need PIO installed as a VSCode extension or as a standalone extension.
-If you use the former, then you will need to add both `ifd-project` and `ifd-project/esp` to the PIO gui, and tell it to build and flash them to resp. the ATMega and the ESP chip.
-If you use the latter, then all you need to do is run `pio run` to build the project and `pio run -t upload` to flash resp. the ATMega and the ESP chip.
+## Building and flashing
 
-<!-- Gonna fix that documentation, I got a bus to take. -->
+You will either need PIO installed as a VSCode extension or as a standalone extension.
+
+### With the PIO VSCode extension
+
+If you use the former, then you will need to add both `ifd-project` and `ifd-project/esp` as PIO projects.
+Run "build" on both of them.
+
+To flash the ESP build, set the bridges on the WeMos to `00001110` (5, 6 and 7 high).
+Connect the card via usb to your computer, hope that it connected well and run "Upload".
+
+To flash the ATMega build, set the bridges on the WeMos to `11110000` (1, 2, 3 and 4 high).
+Connect the card via usb to your computer, hope that it connected well (it usually doesn't, try different cables) and run "Upload".
+
+### With a standalone installation of PIO
+
+Go to the `ifd-project/esp` (`cd esp/`) directory and run `pio run`.
+Set the bridges to `00001110`, connect the card via usb to your computer and run `pio run -t upload`.
+
+Go to the `ifd-project` (`cd ..`) directory and run `pio run`.
+Set the bridges to `11110000`, connect the card via usb to your computer and run `pio run -t upload`.
