@@ -37,7 +37,7 @@ Run "build" on both of them.
 To flash the ESP build, set the bridges on the WeMos to `00001110` (5, 6 and 7 high).
 Connect the card via usb to your computer, hope that it connected well and run "Upload".
 
-To flash the ATMega build, set the bridges on the WeMos to `11110000` (1, 2, 3 and 4 high).
+To flash the ATMega build, set the bridges on the WeMos to `00110000` (1, 2, 3 and 4 high).
 Connect the card via usb to your computer, hope that it connected well (it usually doesn't, try different cables) and run "Upload".
 
 ### With a standalone installation of PIO
