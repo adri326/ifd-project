@@ -9,24 +9,30 @@
 #define LINE_LENGTH 11
 
 #define SERIAL_SPEED 115200
+#define ESP_SPEED 9600
 
 #define INPUT_PIN_A 6
 #define INPUT_PIN_B 7
 #define MIN_DELAY 700
-#define MAX_ALLOWED 50
+#define MAX_ALLOWED 5
 #define MAX_PEOPLE 100
 
 #define AVERAGE_CUSTOMERS_DELAY 1000
+#define MQTT_DELAY 250
+#define ESP_SERIAL_TIMEOUT 100
 
-#define THRESHOLD 128
+#define THRESHOLD 0
 
 String buffer;
 void process_serial3_events() {
-  while (Serial3.available()) {
+  unsigned long begin = millis();
+  while (Serial3.available() && millis() - begin < ESP_SERIAL_TIMEOUT) {
     char c = Serial3.read();
-    Serial.print(c); // forward to serial
+    // Serial.print(c);
     buffer += c;
     if (c == ']') {
+      // Serial.println("");
+      Serial.print(buffer);
       // handle command
       buffer = "";
     }
@@ -50,6 +56,8 @@ unsigned long arrivals = 0;
 unsigned long average_customers_sigma = 0;
 unsigned long average_customers_n = 0;
 double average_customers = 0.0;
+
+unsigned long last_mqtt_update = 0;
 
 void update_oled();
 
@@ -128,6 +136,8 @@ void register_passage(bool direction, unsigned long dt) {
 }
 
 void update_average_customers() {
+  last_average_customers_update = millis();
+
   average_customers_sigma += number_of_people;
   average_customers_n += 1;
   if (average_customers_n > 0) {
@@ -135,22 +145,44 @@ void update_average_customers() {
   }
 }
 
+void update_mqtt() {
+  last_mqtt_update = millis();
+
+  Serial3.print("[UPDATE:");
+  Serial3.print(number_of_people);
+  Serial3.print(":");
+  double lambda = (double)arrivals / (double)millis() * 1000;
+  Serial3.print(lambda * 60);
+  Serial3.print(":");
+  Serial3.print(average_customers);
+  Serial3.print(":");
+  unsigned long average_time_spent = average_customers > 0.1 ? (long)(average_customers / lambda) : 0;
+  Serial3.print(average_time_spent);
+  Serial3.println("]");
+}
+
 void setup() {
   Serial.begin(SERIAL_SPEED);
+  Serial3.begin(ESP_SPEED);
   pinMode(INPUT_PIN_A, INPUT_PULLUP);
   pinMode(INPUT_PIN_B, INPUT_PULLUP);
 
-  Serial.println("Hello, world!");
+  Serial.println("[DBG:MEGA:Welcome!]");
   setup_oled();
 }
 
+bool buzzer = false;
 void loop() {
   process_serial3_events();
   int raw_a = digitalRead(INPUT_PIN_A);
   int raw_b = digitalRead(INPUT_PIN_B);
 
-  pin_a = raw_a > 0;
-  pin_b = raw_b > 0;
+  // Serial.print(raw_a);
+  // Serial.print(" / ");
+  // Serial.println(raw_b);
+
+  pin_a = raw_a > THRESHOLD;
+  pin_b = raw_b > THRESHOLD;
 
   if (obstructed && pin_a && pin_b) { // obstruction end
     obstruction_end = millis();
@@ -169,6 +201,14 @@ void loop() {
 
   if (millis() - last_average_customers_update > AVERAGE_CUSTOMERS_DELAY) {
     update_average_customers();
+  }
+
+  if (millis() - last_mqtt_update > MQTT_DELAY) {
+    update_mqtt();
+  }
+
+  if (number_of_people >= MAX_ALLOWED) {
+    analogWrite(A0, (buzzer = !buzzer) ? 255 : 0);
   }
 
   delay(10);

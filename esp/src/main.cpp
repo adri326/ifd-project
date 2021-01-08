@@ -3,13 +3,16 @@
 #include <ESP8266WiFi.h>
 #include <MQTT.h>
 
+#define SPEED 9600
+
 MQTTClient mqtt_client;
 WiFiClient wifi_client;
 
 #include "credentials.cpp"
 
-const char MQTT_TOPIC_IN[] = "/IFD2/IN";
-const char MQTT_TOPIC_OUT[] = "/IFD2/OUT";
+const char MQTT_TOPIC_IN[] = "wolfo/in";
+const char MQTT_TOPIC_OUT[] = "wolfo/out";
+const char MQTT_TOPIC_ALIVE[] = "wolfo/alive";
 
 void connect() {
   Serial.println("[DBG:ESP:Trying to connect to wifi]");
@@ -39,10 +42,12 @@ String serial_buffer = "";
 void process_serial_events() {
   while (Serial.available()) {
     char c = Serial.read();
-    serial_buffer += c;
-    if (c == ']') {
-      mqtt_client.publish(MQTT_TOPIC_OUT, serial_buffer);
-      serial_buffer = "";
+    if (c != '\n') { // newlines are ignored
+      serial_buffer += c;
+      if (c == ']') {
+        mqtt_client.publish(MQTT_TOPIC_OUT, serial_buffer);
+        serial_buffer = "";
+      }
     }
   }
 }
@@ -51,12 +56,15 @@ unsigned long last_alive = 0;
 void send_alive() {
   if (millis() - last_alive > 10000) {
     last_alive = millis();
-    mqtt_client.publish("/esp/alive", BOARDNAME);
+    String msg(BOARDNAME);
+    msg += " - ";
+    msg += millis();
+    mqtt_client.publish(MQTT_TOPIC_ALIVE, msg);
   }
 }
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(SPEED);
   Serial.println("[DBG:ESP:Welcome!]");
   WiFi.begin(SSID, WIFI_PASS);
 
