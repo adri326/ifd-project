@@ -10,7 +10,7 @@ WiFiClient wifi_client;
 
 #include "credentials.cpp"
 
-const char MQTT_TOPIC_IN[] = "wolfo/in";
+const char MQTT_TOPIC_IN[] = "wolfo/set";
 const char MQTT_TOPIC_OUT[] = "wolfo/out";
 const char MQTT_TOPIC_ALIVE[] = "wolfo/alive";
 
@@ -32,8 +32,8 @@ void connect() {
 
 void message_received(String &topic, String &payload) {
   Serial.print("[FWD:");
-  Serial.print(topic);
-  Serial.print(":");
+  // Serial.print(topic);
+  // Serial.print(":");
   Serial.print(payload);
   Serial.println("]");
 }
@@ -65,12 +65,12 @@ void send_alive() {
 
 void setup() {
   Serial.begin(SPEED);
-  Serial.println("[DBG:ESP:Welcome!]");
   WiFi.begin(SSID, WIFI_PASS);
 
   mqtt_client.begin(HOSTNAME, 1883, wifi_client);
   mqtt_client.onMessage(message_received);
   connect();
+  Serial.println("[ESP:WELCOME]");
 }
 
 void loop() {

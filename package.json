@@ -1,0 +1,27 @@
+{
+  "name": "ifd-project",
+  "version": "1.0.0",
+  "description": "IFD Project",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node-red --settings ./settings.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adri326/ifd-project.git"
+  },
+  "keywords": [
+    "iot"
+  ],
+  "author": "Adrien Burgun, William Mann, Erwann Le Guilly",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/adri326/ifd-project/issues"
+  },
+  "homepage": "https://github.com/adri326/ifd-project#readme",
+  "dependencies": {
+    "node-red": "^1.2.7",
+    "node-red-dashboard": "^2.26.2"
+  }
+}

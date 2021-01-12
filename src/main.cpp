@@ -11,6 +11,7 @@
 #define SERIAL_SPEED 115200
 #define ESP_SPEED 9600
 
+#define RESET_PIN 5
 #define INPUT_PIN_A 6
 #define INPUT_PIN_B 7
 #define MIN_DELAY 700
@@ -18,26 +19,10 @@
 #define MAX_PEOPLE 100
 
 #define AVERAGE_CUSTOMERS_DELAY 1000
-#define MQTT_DELAY 250
+#define MQTT_DELAY 1000
 #define ESP_SERIAL_TIMEOUT 100
 
 #define THRESHOLD 0
-
-String buffer;
-void process_serial3_events() {
-  unsigned long begin = millis();
-  while (Serial3.available() && millis() - begin < ESP_SERIAL_TIMEOUT) {
-    char c = Serial3.read();
-    // Serial.print(c);
-    buffer += c;
-    if (c == ']') {
-      // Serial.println("");
-      Serial.print(buffer);
-      // handle command
-      buffer = "";
-    }
-  }
-}
 
 bool pin_a = false;
 bool pin_b = false;
@@ -60,6 +45,35 @@ double average_customers = 0.0;
 unsigned long last_mqtt_update = 0;
 
 void update_oled();
+
+String buffer;
+void process_serial3_events() {
+  unsigned long begin = millis();
+  while (Serial3.available() && millis() - begin < ESP_SERIAL_TIMEOUT) {
+    char c = Serial3.read();
+    // Serial.print(c);
+    buffer += c;
+    if (c == ']') {
+      // Serial.println("");
+      Serial.print(buffer);
+      buffer.trim();
+      // handle command
+
+      if (buffer.substring(1, buffer.length() - 1) == String("ESP:WELCOME")) {
+        Serial3.println("[QUERY]");
+      } else if (buffer.substring(1, 4) == String("FWD")) {
+        // Serial.println(buffer.substring(5, 8));
+        if (buffer.substring(5, 8) == String("POP")) {
+          String pop_raw = buffer.substring(9, buffer.length() - 1);
+          arrivals += max(pop_raw.toInt() - number_of_people, 0);
+          number_of_people = pop_raw.toInt();
+          update_oled();
+        }
+      }
+      buffer = "";
+    }
+  }
+}
 
 Adafruit_SSD1306 OLED;
 void setup_oled() {
@@ -164,6 +178,7 @@ void update_mqtt() {
 void setup() {
   Serial.begin(SERIAL_SPEED);
   Serial3.begin(ESP_SPEED);
+  pinMode(RESET_PIN, INPUT_PULLUP);
   pinMode(INPUT_PIN_A, INPUT_PULLUP);
   pinMode(INPUT_PIN_B, INPUT_PULLUP);
 
@@ -174,8 +189,13 @@ void setup() {
 bool buzzer = false;
 void loop() {
   process_serial3_events();
+  int raw_reset = digitalRead(RESET_PIN);
   int raw_a = digitalRead(INPUT_PIN_A);
   int raw_b = digitalRead(INPUT_PIN_B);
+
+  if (raw_reset == 0) {
+    number_of_people = 0;
+  }
 
   // Serial.print(raw_a);
   // Serial.print(" / ");
