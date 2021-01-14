@@ -43,7 +43,50 @@ Connect the card via usb to your computer, hope that it connected well (it usual
 ### With a standalone installation of PIO
 
 Go to the `ifd-project/esp` (`cd esp/`) directory and run `pio run`.
-Set the bridges to `00001110`, connect the card via usb to your computer and run `pio run -t upload`.
+Set the bridges to `00001100`, connect the card via usb to your computer and run `pio run -t upload`.
 
 Go to the `ifd-project` (`cd ..`) directory and run `pio run`.
 Set the bridges to `11110000`, connect the card via usb to your computer and run `pio run -t upload`.
+
+### Node-Red
+
+This project includes a Node-Red flow, located at `flows_anarchy.json`.
+You should copy that file into your node-red storage folder.
+
+You can then run Node-Red using `npm`:
+
+```sh
+npm i
+npm run start
+```
+
+The GUI should then be available at `http://localhost:1880/ui/`.
+
+<!--
+I sadly have no more information for you; node-red is a piece of software that involves the mouse to do stuff, and I don't abide by that.
+If you can't figure this out (I wouldn't be able to either), then refer to the next section for the "API".
+-->
+
+## API
+
+The card communicates via `MQTT` to a broker; its messages are in the following format:
+
+```ebnf
+(* This is EBNF. Check out https://fr.wikipedia.org/wiki/Extended_Backus-Naur_Form for more information! *)
+msg = "[", command, [{":", value}], "]";
+any_character = ? any character, bar ":" and "]" ?;
+uppercase = ? uppercase letters ?;
+command = {uppercase};
+value = {any_character};
+```
+
+The commands used are the following:
+
+- The card sends the `[QUERY]` message to the `TOPIC_OUT` channel; you may answer to such a message by sending it back the number of people using the `SET` message (see below)
+- The card periodically sends the `UPDATE` command, with as parameters:
+  - The current number of people in the room
+  - The current arrival rate in humans per minute
+  - The average number of people in the room
+  - The average time spent in the room in seconds
+  (eg. `[UPDATE:3:2.0:2.5:47]` for `3` people in the room, `2.0` people coming in per minute, `2.5` people in the room in average and `47` seconds spent in average in the room)
+- The cards may receive a `SET` command, with as parameter the number of people that the card should think are in the room (eg. `[SET:3]` to set the counter to 3)
