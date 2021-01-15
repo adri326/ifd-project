@@ -11,9 +11,11 @@
 #define SERIAL_SPEED 115200
 #define ESP_SPEED 9600
 
-#define RESET_PIN 5
-#define INPUT_PIN_A 6
-#define INPUT_PIN_B 7
+#define RESET_PIN 7
+#define INPUT_PIN_A A6
+#define INPUT_PIN_B A7
+#define BUZZER_PIN A0
+
 #define MIN_DELAY 700
 #define MAX_ALLOWED 5
 #define MAX_PEOPLE 100
@@ -22,7 +24,7 @@
 #define MQTT_DELAY 1000
 #define ESP_SERIAL_TIMEOUT 100
 
-#define THRESHOLD 0
+#define THRESHOLD 800
 
 bool pin_a = false;
 bool pin_b = false;
@@ -190,8 +192,8 @@ bool buzzer = false;
 void loop() {
   process_serial3_events();
   int raw_reset = digitalRead(RESET_PIN);
-  int raw_a = digitalRead(INPUT_PIN_A);
-  int raw_b = digitalRead(INPUT_PIN_B);
+  int raw_a = analogRead(INPUT_PIN_A);
+  int raw_b = analogRead(INPUT_PIN_B);
 
   if (raw_reset == 0) {
     number_of_people = 0;
@@ -228,7 +230,7 @@ void loop() {
   }
 
   if (number_of_people >= MAX_ALLOWED) {
-    analogWrite(A0, (buzzer = !buzzer) ? 255 : 0);
+    analogWrite(BUZZER_PIN, (buzzer = !buzzer) ? 255 : 0);
   }
 
   delay(10);
